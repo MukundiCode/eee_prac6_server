@@ -6,13 +6,15 @@ app = Flask(__name__)
 def index():
     return render_template('index.html')
 
-#@app.route('/SensorStream')
-#def sensor_stream():
+@app.route('/SensorStream')
+def sensor_stream():
     #TODO: Add code that displays the contents of log file /data/sensorlog.txt 
+    return "sensor"
 
-#@app.route('/download')
-#def download_file():
+@app.route('/download')
+def download_file():
     #TODO: Add code to download the file /data.sensorlog.txt
+    return "download"
 
 
 
