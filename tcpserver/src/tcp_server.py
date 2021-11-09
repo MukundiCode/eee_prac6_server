@@ -4,7 +4,7 @@ import threading
 from flask import Flask, render_template
 
 f = open("/data/sensorlog.txt", "w+")
-
+sensorLogData = []
 
 #establishing connection
 global conn
@@ -25,11 +25,14 @@ def getData(newconnection):
     with newconnection:
         while True:
             data = conn.recv(1024).decode()
+            arr = data.split(" ")
+            #print(arr[0])
+            if(arr[0] == "Sending"):
+                statusResponse(data)
+            sensorLogData.append(data)
             print('\nReceived', data)
             f.write("\nReceived: ")
             f.write(data)
-            contents = f.read()
-            print(contents)
             f.flush()
             if not data: break
 
@@ -67,18 +70,28 @@ def sendoff():
 
 @app.route('/status')
 def status():
-    return "status"
+    print("status")
+    data = "status"
+    conn.send(data.encode())
+    return index()
+
+@app.route('/statusResponse')
+def statusResponse(response):
+    return response
 
 @app.route('/log')
 def log():
-    f = open("sensorlog.txt", "r+")
+    f = open("/data/sensorlog.txt", "w+")
+    response = ""
+    for i in range(len(sensorLogData)-1,0, -1):
+        response = response + sensorLogData[i] + " \n"
     for i in f :
         print(i)
-    return "log"
+    return response
 
 @app.route('/exit')
 def exit():
-    return "exit"
+    return "exited"
 
 if __name__ == '__main__':
     threading.Thread(target=lambda: app.run(host='0.0.0.0', port=80, debug=True, use_reloader=False)).start()
