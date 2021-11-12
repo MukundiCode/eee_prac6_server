@@ -1,7 +1,7 @@
 import socket
 import sys
 import threading
-from flask import Flask, render_template
+from flask import Flask, render_template, send_file
 
 f = open("/data/sensorlog.txt", "w+")
 sensorLogData = []
@@ -26,7 +26,6 @@ def getData(newconnection):
         while True:
             data = conn.recv(1024).decode()
             arr = data.split(" ")
-            #print(arr[0])
             if(arr[0] == "Sending"):
                 statusResponse(data)
             sensorLogData.append(data)
@@ -44,16 +43,26 @@ app = Flask(__name__)
 def index():
     return render_template('index.html')
 
+#get the sensor data
 @app.route('/SensorStream')
 def sensor_stream():
-    #TODO: Add code that displays the contents of log file /data/sensorlog.txt 
-    return "sensor"
+    f = open("/data/sensorlog.txt", "w+")
+    response = ""
+    for i in range(len(sensorLogData)-1,0, -1):
+        response = response + sensorLogData[i] + " \n"
+        response = response + "\n"
+    for i in f :
+        print(i)
+    return response
 
+#get the file to download
 @app.route('/download')
 def download_file():
     #TODO: Add code to download the file /data.sensorlog.txt
-    return "download"
+    path = "/data/sensorlog.txt"
+    return send_file(path, as_attachment=True)
 
+#switch on the sampling
 @app.route('/sendon')
 def sendon():
     print("sendon")
@@ -61,6 +70,7 @@ def sendon():
     conn.send(data.encode())
     return index()
 
+#switch off the sampling
 @app.route('/sendoff')
 def sendoff():
     print("sendoff")
@@ -68,6 +78,7 @@ def sendoff():
     conn.send(data.encode())
     return index()
 
+#get the current status
 @app.route('/status')
 def status():
     print("status")
@@ -79,19 +90,22 @@ def status():
 def statusResponse(response):
     return response
 
+#get the last values
 @app.route('/log')
 def log():
     f = open("/data/sensorlog.txt", "w+")
     response = ""
     for i in range(len(sensorLogData)-1,0, -1):
         response = response + sensorLogData[i] + " \n"
+        response = response + "\n"
     for i in f :
         print(i)
     return response
 
+#exit the program
 @app.route('/exit')
 def exit():
-    return "exited"
+    return "Server Exited"
 
 if __name__ == '__main__':
     threading.Thread(target=lambda: app.run(host='0.0.0.0', port=80, debug=True, use_reloader=False)).start()
